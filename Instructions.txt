@@ -1,0 +1,2 @@
+Eric's things to merge go into this branch
+also, git remote add <name> <address> is useful like 'git remote add GoldenRepo https://github.com/NextRevol
