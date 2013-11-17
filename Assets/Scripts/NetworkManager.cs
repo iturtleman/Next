@@ -9,7 +9,6 @@ public class NetworkManager : MonoBehaviour
     public string connectionIP = "127.0.0.1";
     public int connectionPort = 25001;
 
-
     private void StartServer()
     {
         Network.InitializeServer(32, connectionPort, !Network.HavePublicAddress());
@@ -19,6 +18,11 @@ public class NetworkManager : MonoBehaviour
     void OnServerInitialized()
     {
         Debug.Log("Server Initializied");
+    }
+
+    void OnConnectedToServer()
+    {
+        Debug.Log("Connected to server");
     }
 
     void OnGUI()
@@ -51,11 +55,6 @@ public class NetworkManager : MonoBehaviour
                 Network.Disconnect(200);
             }
         }
-    }
-
-    void OnConnectedToServer()
-    {
-        Debug.Log("Connected to server");
     }
 
     void OnDisconnectedFromServer(NetworkDisconnection info)
