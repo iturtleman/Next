@@ -101,7 +101,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6391e4e7c97df8d45a82a0fffcafb778, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connectionIP: 127.0.0.1
+  connectionIp: 127.0.0.1
   connectionPort: 25001
   currentHealth: 0
 --- !u!4 &199120293

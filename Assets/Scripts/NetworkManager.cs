@@ -8,9 +8,13 @@ public class NetworkManager : MonoBehaviour
 
     private const string typeName = "OurAwesomeUniqueGameName";
     private const string gameName = "UniqueRoomName";
-    public string connectionIP = "127.0.0.1";
+    public string connectionIp = "127.0.0.1";
     public int connectionPort = 25001;
     List<NetworkingPlayerContainer> PlayerObjects = new List<NetworkingPlayerContainer>();
+    private bool IsPickingIP = false;
+    private bool connecting = false;
+    private string failedIp = "";
+    NetworkConnectionError res;
 
     /// <summary>
     /// Adds the provided PlayerWrapper to the cleanup list
@@ -33,11 +37,11 @@ public class NetworkManager : MonoBehaviour
     {
         try
         {
-            var err = Network.InitializeServer(32, connectionPort, !Network.HavePublicAddress());
-            if (err != NetworkConnectionError.NoError)
+            res = Network.InitializeServer(32, connectionPort, !Network.HavePublicAddress());
+            if (res != NetworkConnectionError.NoError)
             {
                 Debug.LogError(
-                    string.Format("Initialization failed with code:{0}", err)
+                    string.Format("Initialization failed with code:{0}", res)
                 );
             }
             MasterServer.RegisterHost(typeName, gameName);
@@ -65,16 +69,55 @@ public class NetworkManager : MonoBehaviour
 
     void OnGUI()
     {
+
         if (Network.peerType == NetworkPeerType.Disconnected)
         {
-            GUI.Label(new Rect(10, 10, 300, 20), "Status: Disconnected");
-            if (GUI.Button(new Rect(10, 30, 120, 20), "Client Connect"))
+            if (IsPickingIP)
             {
-                Network.Connect(connectionIP, connectionPort);
+                if (GUI.Button(new Rect(10, 30, 120, 20), "Back"))
+                {
+                    IsPickingIP = false;
+                    failedIp = "";
+                    connecting = false;
+                }
             }
-            if (GUI.Button(new Rect(10, 50, 120, 20), "Initialize Server"))
+            if (connecting)
             {
-                StartServer();
+                GUIStyle gsty = new GUIStyle();
+                gsty.fontSize = 50;
+                GUI.Label(new Rect((Screen.width / 2) - 250, (Screen.height / 2) - 250, 500, 500), "Connecting");
+            }
+            else
+            {
+                GUI.Label(new Rect(10, 10, 300, 20), "Status: Disconnected");
+                if (failedIp != "")
+                {
+                    GUIStyle gsty = new GUIStyle();
+                    gsty.normal.textColor = Color.red;
+                    GUI.Label(new Rect(10, 70, 120, 20), string.Format("Could not connect to {0} with error:{1}", failedIp, res), gsty);
+                }
+                if (IsPickingIP)
+                {
+                    connectionIp = GUI.TextField(new Rect((Screen.width / 2) - 250, 400, 500, 50), connectionIp);
+
+
+                    if (GUI.Button(new Rect(10, 50, 120, 20), "Connect"))
+                    {
+                        res = Network.Connect(connectionIp, connectionPort);
+                        connecting = true;
+                    }
+                }
+                else
+                {
+                    if (GUI.Button(new Rect(10, 30, 120, 20), "Client Connect"))
+                    {
+                        IsPickingIP = true;
+                    }
+                    if (GUI.Button(new Rect(10, 50, 120, 20), "Initialize Server"))
+                    {
+                        StartServer();
+                    }
+                }
             }
         }
         else
@@ -107,6 +150,9 @@ public class NetworkManager : MonoBehaviour
     void OnFailedToConnect(NetworkConnectionError error)
     {
         Debug.Log("Could not connect to server: " + error);
+        if (IsPickingIP)
+            failedIp = connectionIp + ':' + connectionPort;
+        connecting = false;
     }
 
     void OnPlayerConnected(NetworkPlayer player)

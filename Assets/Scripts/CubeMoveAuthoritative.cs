@@ -57,6 +57,7 @@ public class CubeMoveAuthoritative : MonoBehaviour
             }
 
         }
+        //does the actual moving
         if (Network.isServer)
         {
             Vector3 moveDirection = new Vector3(serverCurrentHInput, 0, serverCurrentVInput);
