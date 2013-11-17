@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System;
 
 public class NetworkManager : MonoBehaviour
 {
@@ -8,21 +10,57 @@ public class NetworkManager : MonoBehaviour
     private const string gameName = "UniqueRoomName";
     public string connectionIP = "127.0.0.1";
     public int connectionPort = 25001;
+    List<NetworkingPlayerContainer> PlayerObjects = new List<NetworkingPlayerContainer>();
+
+    /// <summary>
+    /// Adds the provided PlayerWrapper to the cleanup list
+    /// </summary>
+    /// <param name="player"></param>
+    internal void AddPlayer(NetworkingPlayerContainer player)
+    {
+        PlayerObjects.Add(player);
+        //This is just for debuging
+        foreach (var po in PlayerObjects)
+        {
+            Debug.Log(string.Format(
+                "Player: {0} Original ViewID: {1}",
+                po.Player, po.viewID)
+            );
+        }
+    }
 
     private void StartServer()
     {
-        Network.InitializeServer(32, connectionPort, !Network.HavePublicAddress());
-        MasterServer.RegisterHost(typeName, gameName);
+        try
+        {
+            var err = Network.InitializeServer(32, connectionPort, !Network.HavePublicAddress());
+            if (err != NetworkConnectionError.NoError)
+            {
+                Debug.LogError(
+                    string.Format("Initialization failed with code:{0}", err)
+                );
+            }
+            MasterServer.RegisterHost(typeName, gameName);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
     }
 
     void OnServerInitialized()
     {
         Debug.Log("Server Initializied");
+        //Network.Instantiate(PlayerPrefab, GameObject.Find("PlayerSpawn").transform.position, Quaternion.identity, 0);
     }
 
     void OnConnectedToServer()
     {
         Debug.Log("Connected to server");
+        //if (Network.isClient)
+        //{
+        //    Network.Instantiate(PlayerPrefab, GameObject.Find("PlayerSpawn").transform.position, Quaternion.identity, 0);
+        //}
     }
 
     void OnGUI()
@@ -39,17 +77,15 @@ public class NetworkManager : MonoBehaviour
                 StartServer();
             }
         }
-        else if (Network.peerType == NetworkPeerType.Client)
+        else
         {
-            GUI.Label(new Rect(10, 10, 300, 20), "Status: Connected as Client");
-            if (GUI.Button(new Rect(10, 30, 120, 20), "Disconnect"))
-            {
-                Network.Disconnect(200);
-            }
-        }
-        else if (Network.peerType == NetworkPeerType.Server)
-        {
-            GUI.Label(new Rect(10, 10, 300, 20), "Status: Connected as Server");
+            GUI.Label(new Rect(10, 10, 300, 20),
+                Network.peerType == NetworkPeerType.Client ?
+                    "Status: Connected as Client" :
+                        Network.peerType == NetworkPeerType.Server ?
+                        "Status: Connected as Server" :
+                        "Status: Connected by magic!(WTF)"//this shouldn't happen.
+            );
             if (GUI.Button(new Rect(10, 30, 120, 20), "Disconnect"))
             {
                 Network.Disconnect(200);
@@ -73,18 +109,34 @@ public class NetworkManager : MonoBehaviour
         Debug.Log("Could not connect to server: " + error);
     }
 
-    private int playerCount = 0;
     void OnPlayerConnected(NetworkPlayer player)
     {
-        Debug.Log("Player " + playerCount++ + " connected from " + player.ipAddress + ":" + player.port);
+        int playerNumber = Convert.ToInt32(player.ToString());
+        Debug.Log(string.Format("Player {0} connected from {1}:{2}", playerNumber, player, player.ipAddress, player.port));
     }
 
     void OnPlayerDisconnected(NetworkPlayer player)
     {
-        Debug.Log("Clean up after player " + player);
+        //This will find the viewID's associated with the disconnected player
+        for (int i = 0; i < PlayerObjects.Count; i++)
+        {
+            if (PlayerObjects[i].Player == player.ToString())
+            {
+                Debug.Log("Removing " + PlayerObjects[i].viewID);
+                Network.RemoveRPCs(PlayerObjects[i].viewID);
+                Network.Destroy(PlayerObjects[i].viewID);
+            }
+        }
+        Debug.Log("Size of the list " + PlayerObjects.Count);
+        //Keeps the PlayerObjects list from having old info in it
+        PlayerObjects.RemoveAll(tempList => tempList.Player == player.ToString());
+        Debug.Log("New size " + PlayerObjects.Count);
+        //Dont think this is removing any RPC's because no
+        //player RPC should be buffered but just in case
         Network.RemoveRPCs(player);
+        //Delets the player's Character
         Network.DestroyPlayerObjects(player);
-        playerCount--;
+
     }
 
     void OnNetworkInstantiate(NetworkMessageInfo info)
@@ -107,6 +159,5 @@ public class NetworkManager : MonoBehaviour
             currentHealth = health;
         }
     }
-
 
 }

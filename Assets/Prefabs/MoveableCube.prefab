@@ -92,8 +92,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3847d7b2d2dcfd43812ca6b04c5c0f4, type: 3}
+  m_Script: {fileID: 11500000, guid: 12fec8c009150e34a92ea6686f47426a, type: 3}
   m_Name: 
+  m_EditorClassIdentifier: 
   m_EditorClassIdentifier: 
 --- !u!148 &14800000
 NetworkView:
