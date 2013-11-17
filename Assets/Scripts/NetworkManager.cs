@@ -55,16 +55,12 @@ public class NetworkManager : MonoBehaviour
     void OnServerInitialized()
     {
         Debug.Log("Server Initializied");
-        //Network.Instantiate(PlayerPrefab, GameObject.Find("PlayerSpawn").transform.position, Quaternion.identity, 0);
     }
 
     void OnConnectedToServer()
     {
         Debug.Log("Connected to server");
-        //if (Network.isClient)
-        //{
-        //    Network.Instantiate(PlayerPrefab, GameObject.Find("PlayerSpawn").transform.position, Quaternion.identity, 0);
-        //}
+        ResetConnectionMenu();
     }
 
     void OnGUI()
@@ -76,9 +72,7 @@ public class NetworkManager : MonoBehaviour
             {
                 if (GUI.Button(new Rect(10, 30, 120, 20), "Back"))
                 {
-                    IsPickingIP = false;
-                    failedIp = "";
-                    connecting = false;
+                    ResetConnectionMenu();
                 }
             }
             if (connecting)
@@ -136,23 +130,27 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    void OnDisconnectedFromServer(NetworkDisconnection info)
+    private void ResetConnectionMenu()
     {
-        if (Network.isServer)
-            Debug.Log("Local server connection disconnected");
-        else
-            if (info == NetworkDisconnection.LostConnection)
-                Debug.Log("Lost connection to the server");
-            else
-                Debug.Log("Successfully diconnected from the server");
+        IsPickingIP = false;
+        failedIp = "";
+        connecting = false;
     }
+
+
 
     void OnFailedToConnect(NetworkConnectionError error)
     {
         Debug.Log("Could not connect to server: " + error);
         if (IsPickingIP)
+        {
             failedIp = connectionIp + ':' + connectionPort;
-        connecting = false;
+            connecting = false;
+        }
+        else
+        {
+            ResetConnectionMenu();
+        }
     }
 
     void OnPlayerConnected(NetworkPlayer player)
@@ -164,30 +162,49 @@ public class NetworkManager : MonoBehaviour
     void OnPlayerDisconnected(NetworkPlayer player)
     {
         //This will find the viewID's associated with the disconnected player
-        for (int i = 0; i < PlayerObjects.Count; i++)
+        foreach (var p in PlayerObjects)
         {
-            if (PlayerObjects[i].Player == player.ToString())
+            if (p.Player == player.ToString())
             {
-                Debug.Log("Removing " + PlayerObjects[i].viewID);
-                Network.RemoveRPCs(PlayerObjects[i].viewID);
-                Network.Destroy(PlayerObjects[i].viewID);
+                Debug.Log("Removing " + p.viewID);
+                Network.RemoveRPCs(p.viewID);
+                Network.Destroy(p.viewID);
             }
         }
         Debug.Log("Size of the list " + PlayerObjects.Count);
         //Keeps the PlayerObjects list from having old info in it
         PlayerObjects.RemoveAll(tempList => tempList.Player == player.ToString());
         Debug.Log("New size " + PlayerObjects.Count);
-        //Dont think this is removing any RPC's because no
-        //player RPC should be buffered but just in case
+        //Dont think this is removing any RPC's because no player RPC should be buffered but just in case
         Network.RemoveRPCs(player);
         //Delets the player's Character
         Network.DestroyPlayerObjects(player);
 
     }
 
+    void OnDisconnectedFromServer(NetworkDisconnection info)
+    {
+        if (Network.isServer)
+            Debug.Log("Local server connection disconnected");
+        else
+        {
+            if (info == NetworkDisconnection.LostConnection)
+                Debug.Log("Lost connection to the server");
+            else
+                Debug.Log("Successfully diconnected from the server");
+        }
+        Application.LoadLevel(Application.loadedLevel);
+    }
+
     void OnNetworkInstantiate(NetworkMessageInfo info)
     {
         Debug.Log("New object instantiated by " + info.sender);
+        NetworkView[] networkViews = GetComponents<NetworkView>();
+        Debug.Log("New prefab network instantiated with views - ");
+        foreach (NetworkView view in networkViews)
+        {
+            Debug.Log("- " + view.viewID);
+        }
     }
 
     public int currentHealth;

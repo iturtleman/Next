@@ -16,10 +16,10 @@ public class SpawnAuthorative : MonoBehaviour
     void SpawnPlayer(NetworkPlayer player)
     {
         int playerNumber = Convert.ToInt32(player.ToString());
-        Debug.Log(string.Format("Spawning player {0} connected from {1}:{2}", playerNumber, player, player.ipAddress, player.port));
+        Debug.Log(string.Format("Spawning player {0} connected from {1}:{2}", playerNumber, player.ipAddress, player.port));
         Transform newPlayer = (Transform)Network.Instantiate(playerPrefab, transform.position, transform.rotation, playerNumber);
         //move objects up a bit
-        newPlayer.Translate(new Vector3(0, playerNumber * 10, 0), Space.World);
+        newPlayer.Translate(new Vector3(0, playerNumber * 0, 0), Space.World);
 
         //Makes sure that the player is not the server
         if (player.ToString() != "0")

@@ -5,6 +5,11 @@ public class CubeMoveAuthoritative : MonoBehaviour
 {
 
     public NetworkPlayer theOwner;
+
+
+    Vector3 lastPosition;
+    public float speed = 5;
+
     float lastClientHInput = 0f;
     float lastClientVInput = 0f;
     float serverCurrentHInput = 0f;
@@ -15,7 +20,7 @@ public class CubeMoveAuthoritative : MonoBehaviour
         if (Network.isClient)
         {
             enabled = false;
-            Debug.Log("Turning off");
+            //Debug.Log("Turning off");
         }
     }
 
@@ -30,7 +35,7 @@ public class CubeMoveAuthoritative : MonoBehaviour
         if (player == Network.player)
         {
             enabled = true;
-            Debug.Log("Turning on");
+            //Debug.Log("Turning on");
         }
     }
 
@@ -40,9 +45,8 @@ public class CubeMoveAuthoritative : MonoBehaviour
         {
             float HInput = Input.GetAxis("Horizontal");
             float VInput = Input.GetAxis("Vertical");
-            if (lastClientHInput != HInput || lastClientVInput != VInput)
+            if (HInput != lastClientHInput || VInput != lastClientVInput)
             {
-                Debug.Log("where we at");
                 lastClientHInput = HInput;
                 lastClientVInput = VInput;
                 if (Network.isServer)
@@ -51,7 +55,6 @@ public class CubeMoveAuthoritative : MonoBehaviour
                 }
                 else if (Network.isClient)
                 {
-                    Debug.Log(string.Format("Sending info to server ({0},{1})", HInput, VInput));
                     networkView.RPC("SendMovementInput", RPCMode.Server, HInput, VInput);
                 }
             }
@@ -61,15 +64,17 @@ public class CubeMoveAuthoritative : MonoBehaviour
         if (Network.isServer)
         {
             Vector3 moveDirection = new Vector3(serverCurrentHInput, 0, serverCurrentVInput);
-            float speed = 5;
             transform.Translate(speed * moveDirection * Time.deltaTime);
+            if (transform.position.y < -5)
+            {
+                transform.position = new Vector3(transform.position.x, -4, transform.position.z);
+            }
         }
     }
 
     [RPC]
     void SendMovementInput(float HInput, float VInput)
     {
-        Debug.Log(string.Format("calling this as {0}", Network.isClient ? "client" : "server"));
         serverCurrentHInput = HInput;
         serverCurrentVInput = VInput;
     }
@@ -79,13 +84,23 @@ public class CubeMoveAuthoritative : MonoBehaviour
         if (stream.isWriting)
         {
             Vector3 pos = transform.position;
+            var rot = transform.rotation;
+            var scale = transform.localScale;
             stream.Serialize(ref pos);
+            stream.Serialize(ref rot);
+            stream.Serialize(ref scale);
         }
         else
         {
             Vector3 posReceive = Vector3.zero;
+            var rot = transform.rotation;
+            var scale = transform.localScale;
             stream.Serialize(ref posReceive);
+            stream.Serialize(ref rot);
+            stream.Serialize(ref scale);
             transform.position = posReceive;
+            transform.rotation = rot;
+            transform.localScale = scale;
         }
     }
 }
