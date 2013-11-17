@@ -44,15 +44,10 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Scripts\CubeMoveAuthoritative.cs" />
      <Compile Include="Assets\Scripts\LookAt.cs" />
-     <Compile Include="Assets\Scripts\Move.cs" />
      <Compile Include="Assets\Scripts\MoveRemoteProcedure.cs" />
      <Compile Include="Assets\Scripts\MoveServer.cs" />
      <Compile Include="Assets\Scripts\NetworkManager.cs" />
-     <Compile Include="Assets\Scripts\NetworkingObject.cs" />
-     <Compile Include="Assets\Scripts\Spawn.cs" />
-     <Compile Include="Assets\Scripts\SpawnAuthorative.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
